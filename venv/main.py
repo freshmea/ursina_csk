@@ -1,5 +1,4 @@
 from ursina import *
-from ursina.prefabs.first_person_controller import FirstPersonController
 from ursina.prefabs.sky import Sky
 import random
 
@@ -50,7 +49,7 @@ class Monster(Entity):
             for i in range(len(self.body) - 1, 0, -1):
                 self.body[i].position = self.body[i - 1].position
 
-class AirpersonController(Entity):
+class Snake_camera(Entity):
     def __init__(self, **kwargs):
         super().__init__()
         self.collider = 'sphere'
@@ -148,7 +147,7 @@ class Voxel(Entity):
 
 
 #플레이어 생성
-player1 = AirpersonController(model='sphere', texture='reflection_map_3')
+player1 = Snake_camera(model='sphere', texture='reflection_map_3')
 
 #몬스터 생성
 for i in range(20):
