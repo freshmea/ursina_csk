@@ -1,5 +1,6 @@
 from ursina import *
 from ursina.prefabs.sky import Sky
+from ursina.mesh_importer import *
 import random
 
 #전역변수 지정
@@ -8,7 +9,7 @@ monsters=[]
 box_count = 0
 
 app = Ursina()
-
+window.fullscreen = True
 class Monster(Entity):
     def __init__(self, **kwargs):
         super().__init__()
@@ -48,6 +49,8 @@ class Monster(Entity):
             self.last_time = time.time()
             for i in range(len(self.body) - 1, 0, -1):
                 self.body[i].position = self.body[i - 1].position
+        for i in self.body:
+            i.rotation += Vec3(0,random.randint(5,10),0)
 
 class Snake_camera(Entity):
     def __init__(self, **kwargs):
@@ -84,7 +87,7 @@ class Snake_camera(Entity):
             for i in self.body[6:]:
                 hit_info = self.intersects(i)
                 if hit_info.hit:
-                    exit()
+                    pause()
 
         self.move_body()
 
@@ -95,6 +98,9 @@ class Snake_camera(Entity):
             self.last_time=time.time()
             for i in range(len(self.body)-1, 0, -1):
                 self.body[i].position = self.body[i-1].position
+        for i in self.body:
+            i.rotation += Vec3(0,random.randint(5,10),0)
+
 
 class Voxel(Entity):
     def __init__(self, position =(0,0,0)):
@@ -119,16 +125,13 @@ class Voxel(Entity):
         #     self.lasttime = time.time()
         #     self.color=color.rgb(random.randint(0,255),random.randint(0,255),random.randint(0,255))
 
-
         hit_info = self.intersects(player1)
         if hit_info.hit:
             player1.hits += 1
             print_on_screen(f'hits count {player1.hits}', position=(0,0.4), origin=(0,0), scale=2, duration= 2)
             box_count -= 1
             for i in range(4):
-                follows = Entity(parent=scene, model='sphere', collider='sphere',
-                                 color=color.rgb(random.randint(0, 255), random.randint(0, 255),
-                                                 random.randint(0, 255)), position=(-15,-15,-15))
+                follows = Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png', position=(-15,-15,-15))
                 player1.body.append(follows)
             del boxs[boxs.index(self)]
             destroy(self)
@@ -139,19 +142,20 @@ class Voxel(Entity):
                 monster.turn= True
                 box_count -= 1
                 for i in range(4):
-                    follows = Entity(parent=scene, model='sphere', collider='sphere',
-                                    texture='reflection_map_3',position=(-15,-15,-15))
+                    follows = Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png'
+                                    ,position=(-15,-15,-15))
                     monster.body.append(follows)
                 del boxs[boxs.index(self)]
                 destroy(self)
 
 
 #플레이어 생성
-player1 = Snake_camera(model='sphere', texture='reflection_map_3')
+get_blender('kirby.blend')
+player1 = Snake_camera(texture='kirby_body.png', model='kirby' )
 
 #몬스터 생성
 for i in range(20):
-    monsters.append(Monster(model='sphere', texture='circle_outlined', color=color.red))
+    monsters.append(Monster(texture='kirby_body.png', model='kirby'))
 
 #배경 생성
 sky=Sky()
@@ -175,7 +179,7 @@ def update():
     if abs(player1.position.x)>15 or abs(player1.position.y)>15 or  abs(player1.position.z)>15:
         print_on_screen(f'out!!! out!! out!', position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
     if abs(player1.position.x) > 16 or abs(player1.position.y) > 16 or abs(player1.position.z) > 16:
-        exit()
+        pause()
 
     #몬스터가 못나가게 막음
     for monster in monsters:
