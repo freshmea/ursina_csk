@@ -87,7 +87,7 @@ class Snake_camera(Entity):
             for i in self.body[6:]:
                 hit_info = self.intersects(i)
                 if hit_info.hit:
-                    pause()
+                    application.pause()
 
         self.move_body()
 
@@ -150,7 +150,7 @@ class Voxel(Entity):
 
 
 #플레이어 생성
-get_blender('kirby.blend')
+#get_blender('kirby.blend')
 player1 = Snake_camera(texture='kirby_body.png', model='kirby' )
 
 #몬스터 생성
@@ -179,7 +179,7 @@ def update():
     if abs(player1.position.x)>15 or abs(player1.position.y)>15 or  abs(player1.position.z)>15:
         print_on_screen(f'out!!! out!! out!', position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
     if abs(player1.position.x) > 16 or abs(player1.position.y) > 16 or abs(player1.position.z) > 16:
-        pause()
+        application.pause()
 
     #몬스터가 못나가게 막음
     for monster in monsters:
