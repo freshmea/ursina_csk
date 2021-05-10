@@ -3,6 +3,10 @@ from ursina.prefabs.sky import Sky
 from ursina.mesh_importer import *
 import random
 
+#폰트지정
+Text.default_font='fonts/malgun.ttf'
+color.text_color=color.black
+
 #전역변수 지정
 boxs=[]
 monsters=[]
@@ -128,7 +132,7 @@ class Voxel(Entity):
         hit_info = self.intersects(player1)
         if hit_info.hit:
             player1.hits += 1
-            print_on_screen(f'hits count {player1.hits}', position=(0,0.4), origin=(0,0), scale=2, duration= 2)
+            print_on_screen(f'피자를 먹은수: {player1.hits}', position=(0,0.4), origin=(0,0), scale=2, duration= 2)
             box_count -= 1
             for i in range(4):
                 follows = Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png', position=(-15,-15,-15))
@@ -177,7 +181,8 @@ def update():
 
     #게임 아웃
     if abs(player1.position.x)>15 or abs(player1.position.y)>15 or  abs(player1.position.z)>15:
-        print_on_screen(f'out!!! out!! out!', position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+        out=Text(text='경고!! 경계를 벗어났습니다.!!', color=color.rgb(0,0,0), position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+        #print_on_screen(text=out, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
     if abs(player1.position.x) > 16 or abs(player1.position.y) > 16 or abs(player1.position.z) > 16:
         application.pause()
 
