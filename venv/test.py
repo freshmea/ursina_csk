@@ -1,16 +1,11 @@
 from ursina import *
-app = Ursina()
-descr = dedent('''
-  <scale:1.5><orange>Rainstorm<default><scale:1>
-  Summon a <azure>rain storm <default>to deal 5 <azure>water
+app=Ursina()
+a = Audio('sound/04 - Sanctuary.ogg', pitch=1, loop=True, autoplay=True)
+a.volume=0
+b=Audio(a.clip)
 
-  damage <default>to <hsb(0,1,.7)>everyone, <default><image:file_icon> <red><image:file_icon> test <default>including <orange>yourself. <default>
-  Lasts for 4 rounds.''').strip()
+def input(key):
+    if key == 'f':
+        a.fade_out(duration=4, curve=curve.linear)
 
-Text.default_resolution = 1080 * Text.size
-
-
-
-text = Text('1234\wefw\nwefwef\n wjfoi')
-text.create_background(radius=0, padding=0)
 app.run()

@@ -13,6 +13,12 @@ monsters=[]
 box_count = 0
 
 app = Ursina()
+#사운드 로드
+background_music = Audio('sound/07 - Town.ogg', pitch=1, loop=True, autoplay=True)
+power_up = Audio('sound/power_up_04.ogg', pitch=1, loop=True, autoplay=False)
+attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
+
+
 window.fullscreen = True
 class Monster(Entity):
     def __init__(self, **kwargs):
@@ -53,8 +59,8 @@ class Monster(Entity):
             self.last_time = time.time()
             for i in range(len(self.body) - 1, 0, -1):
                 self.body[i].position = self.body[i - 1].position
-        for i in self.body:
-            i.rotation += Vec3(0,random.randint(5,10),0)
+        # for i in self.body:
+        #     i.rotation += Vec3(0,random.randint(5,10),0)
 
 class Snake_camera(Entity):
     def __init__(self, **kwargs):
@@ -134,6 +140,7 @@ class Voxel(Entity):
             player1.hits += 1
             print_on_screen(f'피자를 먹은수: {player1.hits}', position=(0,0.4), origin=(0,0), scale=2, duration= 2)
             box_count -= 1
+            sound = Audio(power_up.clip, volume=0.1)
             for i in range(4):
                 follows = Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png', position=(-15,-15,-15))
                 player1.body.append(follows)
@@ -146,7 +153,7 @@ class Voxel(Entity):
                 monster.turn= True
                 box_count -= 1
                 for i in range(4):
-                    follows = Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png'
+                    follows = Entity(parent=scene, model='enemy', collider='sphere',texture='zqw1b.png'
                                     ,position=(-15,-15,-15))
                     monster.body.append(follows)
                 del boxs[boxs.index(self)]
@@ -154,16 +161,17 @@ class Voxel(Entity):
 
 
 #플레이어 생성
-#get_blender('kirby.blend')
+#load_model('enemy.blend')
 player1 = Snake_camera(texture='kirby_body.png', model='kirby' )
 
 #몬스터 생성
 for i in range(20):
-    monsters.append(Monster(texture='kirby_body.png', model='kirby'))
+    monsters.append(Monster(texture='zqw1b.png', model='enemy'))
 
 #배경 생성
 sky=Sky()
-
+#배경음악 재생
+background_music_playing=Audio(background_music.clip, volume=2)
 """그리드 생성"""
 grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_x=90, position=(0,15,0))
 grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_x=90, position=(0,-15,0))
@@ -182,6 +190,7 @@ def update():
     #게임 아웃
     if abs(player1.position.x)>15 or abs(player1.position.y)>15 or  abs(player1.position.z)>15:
         out=Text(text='경고!! 경계를 벗어났습니다.!!', color=color.rgb(0,0,0), position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+        sound=Audio(attention.clip)
         #print_on_screen(text=out, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
     if abs(player1.position.x) > 16 or abs(player1.position.y) > 16 or abs(player1.position.z) > 16:
         application.pause()
