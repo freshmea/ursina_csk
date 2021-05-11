@@ -61,6 +61,8 @@ class Monster(Entity):
             for i in range(len(self.body) - 1, 0, -1):
                 self.body[i].position = self.body[i - 1].position
                 self.body[i].rotation = self.body[i-1].rotation
+        # for i in self.body:
+        #     i.rotation += Vec3(0,random.randint(5,10),0)
 
 class Snake_camera(Entity):
     def __init__(self, **kwargs):
@@ -197,30 +199,20 @@ def update():
         #print_on_screen(text=out, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
     if abs(player1.position.x) > 16 or abs(player1.position.y) > 16 or abs(player1.position.z) > 16:
         application.pause()
-    #몬스터와 충돌 확인
-    for _monster in monsters:
-        for monster in _monster.body:
-            hit_info=player1.intersects(monster)
-            if hit_info.hit:
-                print(monster)
-                application.pause()
-    #몬스터가 충돌 할 경우
-    for monster in monsters:
-        for player in player1.body:
-            hit_info=monster.intersects(player)
-            if hit_info.hit:
-                del monsters[monsters.index(monster)]
-                destroy(monster)
-                monsters.append(Monster(texture='badboy.png', model='badboy'))
+    # for _monster in monsters:
+    #     for monster in _monster.body:
+    #         if player1.intersects(monster):
+    #             application.pause()
 
     #몬스터가 못나가게 막음
     for monster in monsters:
-        if monster.x > 15 or monster.x < -15:
-            monster.x *= -1
-        if monster.y > 15 or monster.y < -15:
-            monster.y *= -1
-        if monster.z > 15 or monster.z < -15:
-            monster.z *= -1
+        if monster.hits>10:
+            if monster.x > 15 or monster.x < -15:
+                monster.x *= -1
+            if monster.y > 15 or monster.y < -15:
+                monster.y *= -1
+            if monster.z > 15 or monster.z < -15:
+                monster.z *= -1
 
 
 
