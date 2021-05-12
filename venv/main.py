@@ -23,7 +23,7 @@ attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
 class Monster(Entity):
     def __init__(self, **kwargs):
         super().__init__()
-        self.collider = 'sphere'
+        self.collider = 'box'
         self.speed = 4
         self.last_time = time.time()
         self.turn_time = time.time()
@@ -65,7 +65,7 @@ class Monster(Entity):
 class Snake_camera(Entity):
     def __init__(self, **kwargs):
         super().__init__()
-        self.collider = 'sphere'
+        self.collider = 'box'
         self.speed = 5
         #self.origin_y = -.5
         self.camera_pivot = Entity(parent=self, y=2)
@@ -153,7 +153,7 @@ class Voxel(Entity):
                 monster.turn= True
                 box_count -= 1
                 for i in range(4):
-                    follows = Entity(parent=scene, model='badboy', collider='sphere',texture='badboy.png'
+                    follows = Entity(parent=scene, model='badboy', collider='box',texture='badboy.png'
                                     ,position=(-15,-15,-15), rotation=monster.rotation)
                     monster.body.append(follows)
                 del boxs[boxs.index(self)]
@@ -161,8 +161,9 @@ class Voxel(Entity):
 
 
 #플레이어 생성
-load_model('badboy.blend')
-player1 = Snake_camera(texture='kirby_body.png', model='kirby' )
+#load_model('badboy.blend') #모델 초기 생성
+#obj_to_ursinamesh(name='badboy',save_to_file=True)
+player1 = Snake_camera(texture='kirby_body.png', model='kirby', scale=2 )
 
 #몬스터 생성
 for i in range(20):
@@ -180,6 +181,7 @@ grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_
 grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_y=90, position=(15,0,0))
 grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_y=90, position=(-15,0,0))
 
+#라이트
 Light(type='pointlight', color=(1,0.4,0.4,2))
 Light(type='directional', color=(0.7, 0.7, 0.7, 3), direction=(3,3,1))
 
@@ -194,9 +196,9 @@ def update():
     if abs(player1.position.x)>15 or abs(player1.position.y)>15 or  abs(player1.position.z)>15:
         out=Text(text='경고!! 경계를 벗어났습니다.!!', color=color.rgb(0,0,0), position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
         sound=Audio(attention.clip)
-        #print_on_screen(text=out, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
     if abs(player1.position.x) > 16 or abs(player1.position.y) > 16 or abs(player1.position.z) > 16:
         application.pause()
+
     #몬스터와 충돌 확인
     for _monster in monsters:
         for monster in _monster.body:
@@ -204,14 +206,17 @@ def update():
             if hit_info.hit:
                 print(monster)
                 application.pause()
-    #몬스터가 충돌 할 경우
+
+    #몬스터가 플레이어에 충돌 할 경우
     for monster in monsters:
         for player in player1.body:
             hit_info=monster.intersects(player)
             if hit_info.hit:
+                for i in monster.body:
+                    destroy(i)
                 del monsters[monsters.index(monster)]
                 destroy(monster)
-                monsters.append(Monster(texture='badboy.png', model='badboy'))
+                #monsters.append(Monster(texture='badboy.png', model='badboy'))
 
     #몬스터가 못나가게 막음
     for monster in monsters:
