@@ -1,5 +1,4 @@
 from ursina import *
-from ursina.prefabs.sky import Sky
 from ursina.mesh_importer import *
 import random
 
@@ -163,7 +162,7 @@ class Voxel(Entity):
 #플레이어 생성
 #load_model('badboy.blend') #모델 초기 생성
 #obj_to_ursinamesh(name='badboy',save_to_file=True)
-player1 = Snake_camera(texture='kirby_body.png', model='kirby', scale=2 )
+player1 = Snake_camera(texture='kirby_body.png', model='kirby')
 
 #몬스터 생성
 for i in range(20):
