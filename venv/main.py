@@ -16,7 +16,8 @@ app = Ursina()
 background_music = Audio('sound/07 - Town.ogg', pitch=1, loop=True, autoplay=True)
 power_up = Audio('sound/power_up_04.ogg', pitch=1, loop=True, autoplay=False)
 attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
-
+# 텍스쳐 모음
+textures =[str(x+1) for x in range(12)]
 
 #window.fullscreen = True
 class Monster(Entity):
@@ -116,10 +117,10 @@ class Voxel(Entity):
         super().__init__(
             parent = scene,
             position = position,
-            model = 'cube',
-            texture = 'white_cube',
+            model = random.choice(['sphere', 'cube']),
+            texture = random.choice(['white_cube', 'brick']+textures),
             color = color.color(0,0,random.uniform(0.9,1)),
-            collider = 'box'
+            collider = 'sphere'
         )
         self.lasttime = time.time()
         self.hits = 0
@@ -127,7 +128,7 @@ class Voxel(Entity):
     def update(self):
         global box_count
         #회전
-        #self.rotation_y += time.dt*100
+        self.rotation_y += time.dt*100
 
         #색상변경
         # if time.time()- self.lasttime > 1:
@@ -165,13 +166,13 @@ class Voxel(Entity):
 player1 = Snake_camera(texture='kirby_body.png', model='kirby')
 
 #몬스터 생성
-for i in range(20):
+for i in range(1):
     monsters.append(Monster(texture='badboy.png', model='badboy'))
 
 #배경 생성
 sky=Sky()
 #배경음악 재생
-background_music_playing=Audio(background_music.clip, volume=2)
+background_music_playing=Audio(background_music.clip, volume=2, loop=True)
 """그리드 생성"""
 grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_x=90, position=(0,15,0))
 grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_x=90, position=(0,-15,0))
@@ -186,10 +187,16 @@ Light(type='directional', color=(0.7, 0.7, 0.7, 3), direction=(3,3,1))
 
 def update():
     global box_count
+
+    #박스 리젠
     if box_count <200:
         box_count += 1
         box = Voxel(position = (random.randint(-15, 15), random.randint(-15, 15), random.randint(-15, 15)))
         boxs.append(box)
+
+    #몬스터 리젠
+    if len(monsters)<20:
+        monsters.append(Monster(texture='badboy.png', model='badboy'))
 
     #게임 아웃
     if abs(player1.position.x)>15 or abs(player1.position.y)>15 or  abs(player1.position.z)>15:
@@ -203,7 +210,6 @@ def update():
         for monster in _monster.body:
             hit_info=player1.intersects(monster)
             if hit_info.hit:
-                print(monster)
                 application.pause()
 
     #몬스터가 플레이어에 충돌 할 경우
@@ -215,7 +221,6 @@ def update():
                     destroy(i)
                 del monsters[monsters.index(monster)]
                 destroy(monster)
-                #monsters.append(Monster(texture='badboy.png', model='badboy'))
 
     #몬스터가 못나가게 막음
     for monster in monsters:
@@ -225,6 +230,11 @@ def update():
             monster.y *= -1
         if monster.z > 15 or monster.z < -15:
             monster.z *= -1
+
+    #게임 계속 하기
+    if held_keys['space']:
+        application.resume()
+    print('playing')
 
 
 
