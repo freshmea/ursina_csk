@@ -19,7 +19,7 @@ attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
 # 텍스쳐 모음
 textures =[str(x+1) for x in range(12)]
 
-#window.fullscreen = True
+window.fullscreen = True
 class Monster(Entity):
     def __init__(self, **kwargs):
         super().__init__()
@@ -234,7 +234,6 @@ def update():
     #게임 계속 하기
     if held_keys['space']:
         application.resume()
-    print('playing')
 
 
 
