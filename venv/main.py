@@ -10,6 +10,7 @@ color.text_color=color.black
 boxs=[]
 monsters=[]
 box_count = 0
+AREA_SIZE = 50
 
 app = Ursina()
 #사운드 로드
@@ -101,6 +102,14 @@ class Snake_camera(Entity):
 
         self.move_body()
 
+    def input(self, key):
+        if key == 'w':
+            self.speed += 1
+        if key == 'd':
+            self.speed -= 1
+
+
+
     def move_body(self):
         if len(self.body)>0:
             self.body[0].position = self.position
@@ -170,16 +179,19 @@ for i in range(1):
     monsters.append(Monster(texture='badboy.png', model='badboy'))
 
 #배경 생성
-sky=Sky()
+backgrounds=[str(x) for x in range(21, 34)]
+sky=Sky(texture=random.choice(backgrounds))
+
 #배경음악 재생
 background_music_playing=Audio(background_music.clip, volume=2, loop=True)
 """그리드 생성"""
-grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_x=90, position=(0,15,0))
-grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_x=90, position=(0,-15,0))
-grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_z=90, position=(0,0,15))
-grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_z=90, position=(0,0,-15))
-grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_y=90, position=(15,0,0))
-grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_y=90, position=(-15,0,0))
+grids=[]
+grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=color.color(0,0,0.5,0), rotation_x=90, position=(0,AREA_SIZE/2,0)))
+grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=color.color(0,0,0.5,0), rotation_x=90, position=(0,-AREA_SIZE/2,0)))
+grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=color.color(0,0,0.5,0), rotation_z=90, position=(0,0,AREA_SIZE/2)))
+grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=color.color(0,0,0.5,0), rotation_z=90, position=(0,0,-AREA_SIZE/2)))
+grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=color.color(0,0,0.5,0), rotation_y=90, position=(AREA_SIZE/2,0,0)))
+grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=color.color(0,0,0.5,0), rotation_y=90, position=(-AREA_SIZE/2,0,0)))
 
 #라이트
 Light(type='pointlight', color=(1,0.4,0.4,2))
@@ -189,9 +201,9 @@ def update():
     global box_count
 
     #박스 리젠
-    if box_count <200:
+    if box_count <AREA_SIZE**3/27000*200:
         box_count += 1
-        box = Voxel(position = (random.randint(-15, 15), random.randint(-15, 15), random.randint(-15, 15)))
+        box = Voxel(position = (random.randint(-AREA_SIZE/2, AREA_SIZE/2), random.randint(-AREA_SIZE/2, AREA_SIZE/2), random.randint(-AREA_SIZE/2, AREA_SIZE/2)))
         boxs.append(box)
 
     #몬스터 리젠
@@ -199,11 +211,16 @@ def update():
         monsters.append(Monster(texture='badboy.png', model='badboy'))
 
     #게임 아웃
-    if abs(player1.position.x)>15 or abs(player1.position.y)>15 or  abs(player1.position.z)>15:
+    if abs(player1.position.x)>AREA_SIZE/2-2 or abs(player1.position.y)>AREA_SIZE/2-2 or  abs(player1.position.z)>AREA_SIZE/2-2:
+        for grid in grids:
+            grid.color=(0,0,0.5,1)
         out=Text(text='경고!! 경계를 벗어났습니다.!!', color=color.rgb(0,0,0), position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
         sound=Audio(attention.clip)
-    if abs(player1.position.x) > 16 or abs(player1.position.y) > 16 or abs(player1.position.z) > 16:
+    if abs(player1.position.x) > AREA_SIZE/2+2 or abs(player1.position.y) > AREA_SIZE/2+2 or abs(player1.position.z) > AREA_SIZE/2+2:
         application.pause()
+    if abs(player1.position.x) < AREA_SIZE/2-5 and abs(player1.position.y) < AREA_SIZE/2-5 and abs(player1.position.z) < AREA_SIZE/2-5:
+        for grid in grids:
+            grid.color = (0, 0, 0.5,0)
 
     #몬스터와 충돌 확인
     for _monster in monsters:
@@ -224,16 +241,17 @@ def update():
 
     #몬스터가 못나가게 막음
     for monster in monsters:
-        if monster.x > 15 or monster.x < -15:
+        if monster.x > AREA_SIZE/2 or monster.x < -AREA_SIZE/2:
             monster.x *= -1
-        if monster.y > 15 or monster.y < -15:
+        if monster.y > AREA_SIZE/2 or monster.y < -AREA_SIZE/2:
             monster.y *= -1
-        if monster.z > 15 or monster.z < -15:
+        if monster.z > AREA_SIZE/2 or monster.z < -AREA_SIZE/2:
             monster.z *= -1
 
     #게임 계속 하기
     if held_keys['space']:
-        application.resume()
+        for grid in grids:
+            grid.color=(0,0,0.5,1)
 
 
 
