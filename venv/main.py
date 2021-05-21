@@ -11,16 +11,21 @@ boxs=[]
 monsters=[]
 box_count = 0
 AREA_SIZE = 50
-
+BUTTON_SIZE = (.25, .075)
 app = Ursina()
+
 #사운드 로드
 background_music = Audio('sound/07 - Town.ogg', pitch=1, loop=True, autoplay=True)
 power_up = Audio('sound/power_up_04.ogg', pitch=1, loop=True, autoplay=False)
 attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
+
 # 텍스쳐 모음
 textures =[str(x+1) for x in range(12)]
 
-window.fullscreen = True
+#전체화면 지정
+#window.fullscreen = True
+
+#몬스터 클래스
 class Monster(Entity):
     def __init__(self, **kwargs):
         super().__init__()
@@ -63,6 +68,7 @@ class Monster(Entity):
                 self.body[i].position = self.body[i - 1].position
                 self.body[i].rotation = self.body[i-1].rotation
 
+#주인공 클래스
 class Snake_camera(Entity):
     def __init__(self, **kwargs):
         super().__init__()
@@ -72,7 +78,7 @@ class Snake_camera(Entity):
         self.camera_pivot = Entity(parent=self, y=2)
         self.hits = 0
         self.last_time = time.time()
-        self.body = []
+        self.body = [Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png', position=(-15,-15,-15))]
 
         camera.parent = self.camera_pivot
         camera.position = (0, 0, -8)
@@ -94,11 +100,17 @@ class Snake_camera(Entity):
                               +self.up *self.camera_pivot.rotation_x/-80* (1 - held_keys['s'])).normalized()
         origin = self.world_position
         self.position += self.direction * self.speed * time.dt*0.5
+
+        #자기몸과 충돌 확인
         if len(self.body)>3:
             for i in self.body[6:]:
                 hit_info = self.intersects(i)
                 if hit_info.hit:
                     application.pause()
+                    out = Text(text='자기몸이랑 부딧혀서 죽음', color=color.red, position=(0, 0.4), origin=(0, 0),
+                               scale=2, duration=2)
+                    main_menu.enable()
+                    mouse.locked = False
 
         self.move_body()
 
@@ -120,7 +132,7 @@ class Snake_camera(Entity):
         for i in self.body:
             i.rotation += Vec3(0,random.randint(5,10),0)
 
-
+#피자 클래스
 class Voxel(Entity):
     def __init__(self, position =(0,0,0)):
         super().__init__(
@@ -147,7 +159,7 @@ class Voxel(Entity):
         hit_info = self.intersects(player1)
         if hit_info.hit:
             player1.hits += 1
-            print_on_screen(f'피자를 먹은수: {player1.hits}', position=(0,0.4), origin=(0,0), scale=2, duration= 2)
+            out = Text(text=f'피자를 먹은수: {player1.hits}', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
             box_count -= 1
             sound = Audio(power_up.clip, volume=0.1)
             for i in range(4):
@@ -168,11 +180,105 @@ class Voxel(Entity):
                 del boxs[boxs.index(self)]
                 destroy(self)
 
+#메뉴 클래스
+class MenuMenu(Entity):
+    def __init__(self, **kwargs):
+        super().__init__(parent=camera.ui, ignore_paused=True)
+        self.main_menu = Entity(parent=self, enabled=True)
+        self.options_menu = Entity(parent=self, enabled=False)
+        self.help_menu = Entity(parent=self, enabled=False)
+        #self.background = Sprite('shore', color=color.dark_gray, parent=self, x=0, y=0.4, z=-1)
 
+        Text("메뉴", parent=self.main_menu, y=0.4, x=0, origin=(0,0))
+
+        def quit_game():
+            application.quit()
+
+        def options_menu_btn():
+            self.options_menu.enable()
+            self.main_menu.disable()
+
+        def help_menu_btn():
+            self.help_menu.enable()
+            self.main_menu.disable()
+
+        def restart():
+            global player1
+            global monsters
+
+            for i in player1.body:
+                destroy(i)
+            destroy(player1)
+            for monster in monsters:
+                for i in monster.body:
+                    destroy(i)
+                del monsters[monsters.index(monster)]
+                destroy(monster)
+            player1 = Snake_camera(texture='kirby_body.png', model='kirby')
+            application.resume()
+
+        ButtonList(button_dict={
+            "재시작": Func(restart),
+            "옵션": Func(options_menu_btn),
+            "도움말": Func(help_menu_btn),
+            "게임 종료": Func(quit_game)
+        },y=0,parent=self.main_menu, ignore_paused=True)
+
+        # [OPTIONS MENU] WINDOW START
+        Text ("OPTIONS MENU", parent=self.options_menu, y=0.4, x=0, origin=(0, 0))
+
+        def options_back_btn_action():
+            self.main_menu.enable()
+            self.options_menu.disable()
+
+        Button("Back",parent=self.options_menu,y=-0.3,scale=(0.1,0.05),color=rgb(50,50,50),
+               on_click=options_back_btn_action)
+
+        # [OPTIONS MENU] WINDOW END
+
+        # [HELP MENU] WINDOW START
+        Text ("HELP MENU", parent=self.help_menu, y=0.4, x=0, origin=(0, 0))
+
+        def help_back_btn_action():
+            self.main_menu.enable()
+            self.help_menu.disable()
+
+        ButtonList (button_dict={
+            "Gameplay": Func(print_on_screen,"You clicked on Gameplay help button!", position=(0,.1), origin=(0,0)),
+            "Battle": Func(print_on_screen,"You clicked on Battle help button!", position=(0,.1), origin=(0,0)),
+            "Control": Func(print_on_screen,"You clicked on Control help button!", position=(0,.1), origin=(0,0)),
+            "Back": Func (help_back_btn_action)
+        }, y=0, parent=self.help_menu, ignore_paused=True)
+        # [HELP MENU] WINDOW END
+
+        for key, value in kwargs.items ():
+            setattr (self, key, value)
+
+    def input(self, key):
+        if self.options_menu.enabled:
+            if key == "escape":
+                self.main_menu.enable()
+                self.options_menu.disable()
+
+        if self.help_menu.enabled:
+            if key == "escape":
+                self.main_menu.enable()
+                self.help_menu.disable()
+        if key=='space':
+            application.resume()
+
+    def update(self):
+        pass
+
+
+#메뉴 생성
+main_menu = MenuMenu()
+main_menu.disable()
 #플레이어 생성
 #load_model('badboy.blend') #모델 초기 생성
 #obj_to_ursinamesh(name='badboy',save_to_file=True)
 player1 = Snake_camera(texture='kirby_body.png', model='kirby')
+
 
 #몬스터 생성
 for i in range(1):
@@ -197,6 +303,7 @@ grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=colo
 Light(type='pointlight', color=(1,0.4,0.4,2))
 Light(type='directional', color=(0.7, 0.7, 0.7, 3), direction=(3,3,1))
 
+#게임 루프
 def update():
     global box_count
 
@@ -214,10 +321,13 @@ def update():
     if abs(player1.position.x)>AREA_SIZE/2-2 or abs(player1.position.y)>AREA_SIZE/2-2 or  abs(player1.position.z)>AREA_SIZE/2-2:
         for grid in grids:
             grid.color=(0,0,0.5,1)
-        out=Text(text='경고!! 경계를 벗어났습니다.!!', color=color.rgb(0,0,0), position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+        out=Text(text='경고!! 경계를 벗어났습니다.!!', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
         sound=Audio(attention.clip)
     if abs(player1.position.x) > AREA_SIZE/2+2 or abs(player1.position.y) > AREA_SIZE/2+2 or abs(player1.position.z) > AREA_SIZE/2+2:
         application.pause()
+        out=Text(text='경계를 벗어나서 죽음.', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+        main_menu.enable()
+        mouse.locked = False
     if abs(player1.position.x) < AREA_SIZE/2-5 and abs(player1.position.y) < AREA_SIZE/2-5 and abs(player1.position.z) < AREA_SIZE/2-5:
         for grid in grids:
             grid.color = (0, 0, 0.5,0)
@@ -225,9 +335,12 @@ def update():
     #몬스터와 충돌 확인
     for _monster in monsters:
         for monster in _monster.body:
-            hit_info=player1.intersects(monster)
+            hit_info=player1.body[0].intersects(monster)
             if hit_info.hit:
                 application.pause()
+                out = Text(text='몬스터와 부딧혀서 죽음', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+                main_menu.enable()
+                mouse.locked = False
 
     #몬스터가 플레이어에 충돌 할 경우
     for monster in monsters:
@@ -248,12 +361,23 @@ def update():
         if monster.z > AREA_SIZE/2 or monster.z < -AREA_SIZE/2:
             monster.z *= -1
 
-    #게임 계속 하기
+    #경계선 보이기
     if held_keys['space']:
         for grid in grids:
             grid.color=(0,0,0.5,1)
 
 
+def input(key):
+    #메뉴보이기
+    if not mouse.locked:
+        main_menu.disable()
+        mouse.locked=True
+    if main_menu.enabled:
+        main_menu.disable()
+    if key=='f10':
+        application.pause()
+        main_menu.enable()
+        mouse.locked=False
 
 app.run()
 
