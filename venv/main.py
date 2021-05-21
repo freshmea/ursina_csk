@@ -159,7 +159,8 @@ class Voxel(Entity):
         hit_info = self.intersects(player1)
         if hit_info.hit:
             player1.hits += 1
-            out = Text(text=f'피자를 먹은수: {player1.hits}', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+            out = Text(text=f'피자를 먹은수: {player1.hits}', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2)
+            destroy(out, delay=2)
             box_count -= 1
             sound = Audio(power_up.clip, volume=0.1)
             for i in range(4):
@@ -321,11 +322,13 @@ def update():
     if abs(player1.position.x)>AREA_SIZE/2-2 or abs(player1.position.y)>AREA_SIZE/2-2 or  abs(player1.position.z)>AREA_SIZE/2-2:
         for grid in grids:
             grid.color=(0,0,0.5,1)
-        out=Text(text='경고!! 경계를 벗어났습니다.!!', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+        out=Text(text='경고!! 경계를 벗어났습니다.!!', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2)
+        destroy(out, delay=2)
         sound=Audio(attention.clip)
     if abs(player1.position.x) > AREA_SIZE/2+2 or abs(player1.position.y) > AREA_SIZE/2+2 or abs(player1.position.z) > AREA_SIZE/2+2:
         application.pause()
-        out=Text(text='경계를 벗어나서 죽음.', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+        out=Text(text='경계를 벗어나서 죽음.', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2)
+        destroy(out, delay=2)
         main_menu.enable()
         mouse.locked = False
     if abs(player1.position.x) < AREA_SIZE/2-5 and abs(player1.position.y) < AREA_SIZE/2-5 and abs(player1.position.z) < AREA_SIZE/2-5:
@@ -338,7 +341,8 @@ def update():
             hit_info=player1.body[0].intersects(monster)
             if hit_info.hit:
                 application.pause()
-                out = Text(text='몬스터와 부딧혀서 죽음', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2, duration=2)
+                out=Text(text='몬스터와 부딧혀서 죽음', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2)
+                destroy(out, delay=2)
                 main_menu.enable()
                 mouse.locked = False
 
@@ -370,11 +374,10 @@ def update():
 def input(key):
     #메뉴보이기
     if not mouse.locked:
-        main_menu.disable()
         mouse.locked=True
     if main_menu.enabled:
         main_menu.disable()
-    if key=='f10':
+    if key=='f1':
         application.pause()
         main_menu.enable()
         mouse.locked=False
