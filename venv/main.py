@@ -1,5 +1,6 @@
 from ursina import *
 from ursina.mesh_importer import *
+from ursina.prefabs.health_bar import *
 import random
 
 #폰트지정
@@ -13,9 +14,12 @@ box_count = 0
 AREA_SIZE = 30
 BUTTON_SIZE = (.25, .075)
 app = Ursina()
+MAX_COUNT = 30
+monster_hits = 0
+grid_clear = True
 
 #사운드 로드
-background_music = Audio('sound/07 - Town.ogg', pitch=1, loop=True, autoplay=True)
+background_music = Audio('sound/07 - Town.ogg', pitch=1, loop=True, autoplay=True, loops=10000)
 power_up = Audio('sound/power_up_04.ogg', pitch=1, loop=True, autoplay=False)
 attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
 
@@ -23,7 +27,7 @@ attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
 textures =[str(x+1) for x in range(12)]
 
 #전체화면 지정
-window.fullscreen = True
+#window.fullscreen = True
 
 #몬스터 클래스
 class Monster(Entity):
@@ -149,6 +153,7 @@ class Voxel(Entity):
 
     def update(self):
         global box_count
+        global monster_hits
         #회전
         self.rotation_y += time.dt*100
 
@@ -160,8 +165,7 @@ class Voxel(Entity):
         hit_info = self.intersects(player1)
         if hit_info.hit:
             player1.hits += 1
-            out = Text(text=f'피자를 먹은수: {player1.hits}', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2)
-            destroy(out, delay=2)
+            ui.health_bar_1.value = player1.hits
             box_count -= 1
             sound = Audio(power_up.clip, volume=0.1)
             for i in range(4):
@@ -175,6 +179,7 @@ class Voxel(Entity):
             hit_info = self.intersects(monster)
             if hit_info.hit:
                 monster.turn= True
+                monster_hits += 1
                 box_count -= 1
                 for i in range(4):
                     #follows = Entity(parent=scene, model='badboy', collider='box',texture='badboy.png'
@@ -191,10 +196,9 @@ class MenuMenu(Entity):
         super().__init__(parent=camera.ui, ignore_paused=True)
         self.main_menu = Entity(parent=self, enabled=True)
         self.options_menu = Entity(parent=self, enabled=False)
-        self.help_menu = Entity(parent=self, enabled=False)
         #self.background = Sprite('shore', color=color.dark_gray, parent=self, x=0, y=0.4, z=-1)
 
-        Text("메뉴", parent=self.main_menu, y=0.4, x=0, origin=(0,0))
+        Text("메뉴", parent=self.main_menu, y=0.4, x=0, origin=(0,0), color=color.red)
 
         def quit_game():
             application.quit()
@@ -203,9 +207,9 @@ class MenuMenu(Entity):
             self.options_menu.enable()
             self.main_menu.disable()
 
-        def help_menu_btn():
-            self.help_menu.enable()
-            self.main_menu.disable()
+        def grid_btn():
+            global grid_clear
+            grid_clear = not grid_clear
 
         def restart():
             global player1
@@ -225,7 +229,7 @@ class MenuMenu(Entity):
         ButtonList(button_dict={
             "재시작": Func(restart),
             "옵션": Func(options_menu_btn),
-            "도움말": Func(help_menu_btn),
+            "경계 보기": Func(grid_btn),
             "게임 종료": Func(quit_game)
         },y=0,parent=self.main_menu, ignore_paused=True)
 
@@ -241,21 +245,6 @@ class MenuMenu(Entity):
 
         # [OPTIONS MENU] WINDOW END
 
-        # [HELP MENU] WINDOW START
-        Text ("HELP MENU", parent=self.help_menu, y=0.4, x=0, origin=(0, 0))
-
-        def help_back_btn_action():
-            self.main_menu.enable()
-            self.help_menu.disable()
-
-        ButtonList (button_dict={
-            "Gameplay": Func(print_on_screen,"You clicked on Gameplay help button!", position=(0,.1), origin=(0,0)),
-            "Battle": Func(print_on_screen,"You clicked on Battle help button!", position=(0,.1), origin=(0,0)),
-            "Control": Func(print_on_screen,"You clicked on Control help button!", position=(0,.1), origin=(0,0)),
-            "Back": Func (help_back_btn_action)
-        }, y=0, parent=self.help_menu, ignore_paused=True)
-        # [HELP MENU] WINDOW END
-
         for key, value in kwargs.items ():
             setattr (self, key, value)
 
@@ -265,28 +254,48 @@ class MenuMenu(Entity):
                 self.main_menu.enable()
                 self.options_menu.disable()
 
-        if self.help_menu.enabled:
-            if key == "escape":
-                self.main_menu.enable()
-                self.help_menu.disable()
         if key=='space':
             application.resume()
 
     def update(self):
         pass
 
+#유저 인터페이스 클래스
+class UI(Entity):
+    def __init__(self):
+        super().__init__(parent=camera.ui, ignore_paused=True)
+        self.score = 0
+        self.frame = Entity(parent=self, ignore_pauded=True, )
+
+        frame1=Entity(model='quad', parent = self, color=color.color(0, 0, 0, 1), scale=(2,0.01), position=(0,0.49))
+        frame2=Entity(model='quad', parent = self, color=color.color(0, 0, 0, 1), scale=(2,0.01), position=(0,-0.49))
+        frame3=Entity(model='quad', parent = self, color=color.color(0, 0, 0, 1), scale=(0.01,1), position=(0.88,0))
+        frame4=Entity(model='quad', parent = self, color=color.color(0, 0, 0, 1), scale=(0.01,1), position=(-0.88,0))
+        self.health_bar_1_text=Text(text=f'피자 먹은수 {player1.hits}', position=(-0.85, 0.47), color=color.blue)
+        self.health_bar_1 = HealthBar(parent = self, bar_color=color.lime.tint(-.25), roundness=.5, max_value=MAX_COUNT)
+        self.health_bar_1.value=0
+    def update(self):
+        global monster_hits
+        destroy(self.health_bar_1_text)
+        self.health_bar_1_text=Text(text=f'피자 먹은수 {player1.hits}            몬스터의 갯수{len(monsters)}       몬스터가 먹은 피자수{monster_hits}', position=(-0.85, 0.47), color=color.blue)
+        pass
 
 #메뉴 생성
 main_menu = MenuMenu()
 main_menu.disable()
+
+
+
 #플레이어 생성
 #load_model('badboy.blend') #모델 초기 생성
 #obj_to_ursinamesh(name='badboy',save_to_file=True)
 player1 = Snake_camera(texture='kirby_body.png', model='kirby')
 
+#UI 생성
+ui = UI()
 
 #몬스터 생성
-for i in range(1):
+for i in range(20):
     monsters.append(Monster(texture='badboy.png', model='badboy'))
 
 #배경 생성
@@ -311,7 +320,7 @@ Light(type='directional', color=(0.7, 0.7, 0.7, 3), direction=(3,3,1))
 #게임 루프
 def update():
     global box_count
-
+    global grid_clear
     #박스 리젠
     if box_count <AREA_SIZE**3/27000*200:
         box_count += 1
@@ -335,7 +344,9 @@ def update():
         destroy(out, delay=2)
         main_menu.enable()
         mouse.locked = False
-    if abs(player1.position.x) < AREA_SIZE/2-5 and abs(player1.position.y) < AREA_SIZE/2-5 and abs(player1.position.z) < AREA_SIZE/2-5:
+
+    #그리드 지우기
+    if abs(player1.position.x) < AREA_SIZE/2-5 and abs(player1.position.y) < AREA_SIZE/2-5 and abs(player1.position.z) < AREA_SIZE/2-5 and grid_clear:
         for grid in grids:
             grid.color = (0, 0, 0.5,0)
 
@@ -359,6 +370,14 @@ def update():
                     destroy(i)
                 del monsters[monsters.index(monster)]
                 destroy(monster)
+
+    #피자를 30개 먹으면 게임 종료
+    if player1.hits > MAX_COUNT-1:
+        application.pause()
+        out = Text(text='성공!! 게임을 클리어 했어요!', color=color.red, position=(0, 0.2), origin=(0, 0), scale=5)
+        destroy(out, delay=2)
+        main_menu.enable()
+        mouse.locked = False
 
     #몬스터가 못나가게 막음
     for monster in monsters:
