@@ -10,7 +10,7 @@ color.text_color=color.black
 boxs=[]
 monsters=[]
 box_count = 0
-AREA_SIZE = 50
+AREA_SIZE = 30
 BUTTON_SIZE = (.25, .075)
 app = Ursina()
 
@@ -23,7 +23,7 @@ attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
 textures =[str(x+1) for x in range(12)]
 
 #전체화면 지정
-#window.fullscreen = True
+window.fullscreen = True
 
 #몬스터 클래스
 class Monster(Entity):
@@ -107,8 +107,9 @@ class Snake_camera(Entity):
                 hit_info = self.intersects(i)
                 if hit_info.hit:
                     application.pause()
-                    out = Text(text='자기몸이랑 부딧혀서 죽음', color=color.red, position=(0, 0.4), origin=(0, 0),
-                               scale=2, duration=2)
+                    out = Text(text='자기몸이랑 부딪혀서 죽음', color=color.red, position=(0, 0.4), origin=(0, 0),
+                               scale=2)
+                    destroy(out, delay=2)
                     main_menu.enable()
                     mouse.locked = False
 
@@ -164,7 +165,8 @@ class Voxel(Entity):
             box_count -= 1
             sound = Audio(power_up.clip, volume=0.1)
             for i in range(4):
-                follows = Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png', position=(-15,-15,-15))
+                #follows = Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png', position=(-15,-15,-15))
+                follows = Entity(parent=scene, model='sphere', collider='sphere', position=(-15,-15,-15), color=color.rgb(255, 91, 173), scale=0.7)
                 player1.body.append(follows)
             del boxs[boxs.index(self)]
             destroy(self)
@@ -175,8 +177,10 @@ class Voxel(Entity):
                 monster.turn= True
                 box_count -= 1
                 for i in range(4):
-                    follows = Entity(parent=scene, model='badboy', collider='box',texture='badboy.png'
-                                    ,position=(-15,-15,-15), rotation=monster.rotation)
+                    #follows = Entity(parent=scene, model='badboy', collider='box',texture='badboy.png'
+                    #                ,position=(-15,-15,-15), rotation=monster.rotation)
+                    follows = Entity(parent=scene, model='sphere', collider='sphere',texture='brick',
+                                     position=(-15, -15, -15), color=color.black, scale=0.8)
                     monster.body.append(follows)
                 del boxs[boxs.index(self)]
                 destroy(self)
@@ -341,7 +345,7 @@ def update():
             hit_info=player1.body[0].intersects(monster)
             if hit_info.hit:
                 application.pause()
-                out=Text(text='몬스터와 부딧혀서 죽음', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2)
+                out=Text(text='몬스터와 부딪혀서 죽음', color=color.red, position=(0, 0.4), origin=(0, 0), scale=2)
                 destroy(out, delay=2)
                 main_menu.enable()
                 mouse.locked = False
