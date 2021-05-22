@@ -19,15 +19,14 @@ monster_hits = 0
 grid_clear = True
 
 #사운드 로드
-background_music = Audio('sound/07 - Town.ogg', pitch=1, loop=True, autoplay=True, loops=10000)
+background_music = Audio('sound/07 - Town.ogg', pitch=1, loop=True, autoplay=True, loops=-1)
 power_up = Audio('sound/power_up_04.ogg', pitch=1, loop=True, autoplay=False)
 attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
 
 # 텍스쳐 모음
-textures =[str(x+1) for x in range(12)]
 
 #전체화면 지정
-#window.fullscreen = True
+window.fullscreen = True
 
 #몬스터 클래스
 class Monster(Entity):
@@ -73,7 +72,7 @@ class Monster(Entity):
                 self.body[i].rotation = self.body[i-1].rotation
 
 #주인공 클래스
-class Snake_camera(Entity):
+class Player_kirby(Entity):
     def __init__(self, **kwargs):
         super().__init__()
         self.collider = 'box'
@@ -96,12 +95,13 @@ class Snake_camera(Entity):
 
     def update(self):
         self.rotation_y += mouse.velocity[0] * self.mouse_sensitivity[1]
+        self.rotation_y += 5*(held_keys['d'] - held_keys['a'])
+        self.camera_pivot.rotation_x += 5*(held_keys['s'] - held_keys['w'])
 
         self.camera_pivot.rotation_x -= mouse.velocity[1] * self.mouse_sensitivity[0]
         self.camera_pivot.rotation_x = clamp(self.camera_pivot.rotation_x, -90, 90)
 
-        self.direction = Vec3(self.forward * (1 - held_keys['s']) + self.right * (held_keys['d'] - held_keys['a'])
-                              +self.up *self.camera_pivot.rotation_x/-80* (1 - held_keys['s'])).normalized()
+        self.direction = Vec3(self.forward + self.up *self.camera_pivot.rotation_x/-80).normalized()
         origin = self.world_position
         self.position += self.direction * self.speed * time.dt*0.5
 
@@ -120,10 +120,7 @@ class Snake_camera(Entity):
         self.move_body()
 
     def input(self, key):
-        if key == 'w':
-            self.speed += 1
-        if key == 'd':
-            self.speed -= 1
+        pass
 
 
 
@@ -134,8 +131,6 @@ class Snake_camera(Entity):
             self.last_time=time.time()
             for i in range(len(self.body)-1, 0, -1):
                 self.body[i].position = self.body[i-1].position
-        for i in self.body:
-            i.rotation += Vec3(0,random.randint(5,10),0)
 
 #피자 클래스
 class Voxel(Entity):
@@ -143,10 +138,10 @@ class Voxel(Entity):
         super().__init__(
             parent = scene,
             position = position,
-            model = random.choice(['sphere', 'cube']),
-            texture = random.choice(['white_cube', 'brick']+textures),
+            model = random.choice(['pizza']), scale=0.01,
+            texture = 'pizza',
             color = color.color(0,0,random.uniform(0.9,1)),
-            collider = 'sphere'
+            collider = 'box'
         )
         self.lasttime = time.time()
         self.hits = 0
@@ -166,11 +161,13 @@ class Voxel(Entity):
         if hit_info.hit:
             player1.hits += 1
             ui.health_bar_1.value = player1.hits
+            ui.health_bar_1_kirby.x += 0.018
             box_count -= 1
             sound = Audio(power_up.clip, volume=0.1)
             for i in range(4):
                 #follows = Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png', position=(-15,-15,-15))
                 follows = Entity(parent=scene, model='sphere', collider='sphere', position=(-15,-15,-15), color=color.rgb(255, 91, 173), scale=0.7)
+                follows.set_render_mode_wireframe(True)
                 player1.body.append(follows)
             del boxs[boxs.index(self)]
             destroy(self)
@@ -180,12 +177,15 @@ class Voxel(Entity):
             if hit_info.hit:
                 monster.turn= True
                 monster_hits += 1
+                ui.health_bar_2.value = monster_hits
+                ui.health_bar_2_bad.x -= 0.0018
                 box_count -= 1
                 for i in range(4):
                     #follows = Entity(parent=scene, model='badboy', collider='box',texture='badboy.png'
                     #                ,position=(-15,-15,-15), rotation=monster.rotation)
-                    follows = Entity(parent=scene, model='sphere', collider='sphere',texture='brick',
-                                     position=(-15, -15, -15), color=color.black, scale=0.8)
+                    follows = Entity(parent=scene, model='sphere', collider='sphere',color=color.light_gray.tint(-0.5),
+                                     position=(-15, -15, -15), scale=0.8)
+                    follows.set_render_mode_wireframe(True)
                     monster.body.append(follows)
                 del boxs[boxs.index(self)]
                 destroy(self)
@@ -223,7 +223,7 @@ class MenuMenu(Entity):
                     destroy(i)
                 del monsters[monsters.index(monster)]
                 destroy(monster)
-            player1 = Snake_camera(texture='kirby_body.png', model='kirby')
+            player1 = Player_kirby(texture='kirby_body.png', model='kirby')
             application.resume()
 
         ButtonList(button_dict={
@@ -271,14 +271,23 @@ class UI(Entity):
         frame2=Entity(model='quad', parent = self, color=color.color(0, 0, 0, 1), scale=(2,0.01), position=(0,-0.49))
         frame3=Entity(model='quad', parent = self, color=color.color(0, 0, 0, 1), scale=(0.01,1), position=(0.88,0))
         frame4=Entity(model='quad', parent = self, color=color.color(0, 0, 0, 1), scale=(0.01,1), position=(-0.88,0))
-        self.health_bar_1_text=Text(text=f'피자 먹은수 {player1.hits}', position=(-0.85, 0.47), color=color.blue)
-        self.health_bar_1 = HealthBar(parent = self, bar_color=color.lime.tint(-.25), roundness=.5, max_value=MAX_COUNT)
+        self.health_bar_1_text=Text(text=f'피자 먹은수 {player1.hits}/30', position=(-0.85, 0.47), color=color.blue)
+        self.health_bar_1_kirby = Entity(parent=self, model='kirby', texture='kirby_body.png',
+                                         position=((-.44 * window.aspect_ratio, .45)), scale=0.05, rotation_y=180)
+        self.health_bar_1 = HealthBar(parent = self, bar_color=color.pink.tint(-.25), roundness=.5, max_value=MAX_COUNT)
         self.health_bar_1.value=0
+        self.health_bar_2_bad = Entity(parent=self, model='badboy', texture='badboy.png',
+                                         position=((.1 * window.aspect_ratio, .445)), scale=0.05)
+        self.health_bar_2 = HealthBar(parent = self, bar_color=color.lime.tint(-.25), roundness=.5, max_value=300, position = (.1 * window.aspect_ratio, .425), rotation_z=180)
+        self.health_bar_2.value=0
+
     def update(self):
         global monster_hits
         destroy(self.health_bar_1_text)
-        self.health_bar_1_text=Text(text=f'피자 먹은수 {player1.hits}            몬스터의 갯수{len(monsters)}       몬스터가 먹은 피자수{monster_hits}', position=(-0.85, 0.47), color=color.blue)
-        pass
+        self.health_bar_1_text=Text(text=f'피자 먹은수 {player1.hits}/30            몬스터의 갯수{len(monsters)}       몬스터가 먹은 피자수{monster_hits}/300', position=(-0.85, 0.47), color=color.blue)
+        self.health_bar_2_bad.rotation_y += 5
+        self.health_bar_1_kirby.rotation_y += 5
+
 
 #메뉴 생성
 main_menu = MenuMenu()
@@ -287,19 +296,19 @@ main_menu.disable()
 
 
 #플레이어 생성
-#load_model('badboy.blend') #모델 초기 생성
+#load_model('pizza.blend') #모델 초기 생성
 #obj_to_ursinamesh(name='badboy',save_to_file=True)
-player1 = Snake_camera(texture='kirby_body.png', model='kirby')
+player1 = Player_kirby(texture='kirby_body.png', model='kirby')
 
 #UI 생성
 ui = UI()
 
 #몬스터 생성
 for i in range(20):
-    monsters.append(Monster(texture='badboy.png', model='badboy'))
+    monsters.append(Monster(texture='badboy.png', model='badboy', scale=1.5))
 
 #배경 생성
-backgrounds=[str(x) for x in range(21, 34)]
+backgrounds=[str(x) for x in range(21, 33)]
 sky=Sky(texture=random.choice(backgrounds))
 
 #배경음악 재생
@@ -375,7 +384,7 @@ def update():
     if player1.hits > MAX_COUNT-1:
         application.pause()
         out = Text(text='성공!! 게임을 클리어 했어요!', color=color.red, position=(0, 0.2), origin=(0, 0), scale=5)
-        destroy(out, delay=2)
+        destroy(out, delay=6)
         main_menu.enable()
         mouse.locked = False
 
