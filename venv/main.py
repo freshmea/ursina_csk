@@ -81,7 +81,7 @@ class Player_kirby(Entity):
         self.camera_pivot = Entity(parent=self, y=2)
         self.hits = 0
         self.last_time = time.time()
-        self.body = [Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png', position=(-15,-15,-15))]
+        self.body = [Entity(parent=scene, model='sphere', collider='sphere', position=(-15,-15,-15), color=color.rgb(255, 91, 173), scale=0.7)]
 
         camera.parent = self.camera_pivot
         camera.position = (0, 0, -8)
@@ -89,7 +89,8 @@ class Player_kirby(Entity):
         camera.fov = 90
         mouse.locked = True
         self.mouse_sensitivity = Vec2(40, 40)
-
+        DirectionalLight(parent=self, color=(1, 1, 1, 100), rotation_x=45)
+        SpotLight(parent=self, color=(1, 1, 1, 1), rotation_x=0)
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -152,11 +153,6 @@ class Voxel(Entity):
         #회전
         self.rotation_y += time.dt*100
 
-        #색상변경
-        # if time.time()- self.lasttime > 1:
-        #     self.lasttime = time.time()
-        #     self.color=color.rgb(random.randint(0,255),random.randint(0,255),random.randint(0,255))
-
         hit_info = self.intersects(player1)
         if hit_info.hit:
             player1.hits += 1
@@ -165,7 +161,6 @@ class Voxel(Entity):
             box_count -= 1
             sound = Audio(power_up.clip, volume=0.1)
             for i in range(4):
-                #follows = Entity(parent=scene, model='kirby', collider='sphere',texture='kirby_body.png', position=(-15,-15,-15))
                 follows = Entity(parent=scene, model='sphere', collider='sphere', position=(-15,-15,-15), color=color.rgb(255, 91, 173), scale=0.7)
                 follows.set_render_mode_wireframe(True)
                 player1.body.append(follows)
@@ -322,9 +317,7 @@ grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=colo
 grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=color.color(0,0,0.5,0), rotation_y=90, position=(AREA_SIZE/2,0,0)))
 grids.append(Entity(model=Grid(AREA_SIZE,AREA_SIZE), scale=AREA_SIZE, color=color.color(0,0,0.5,0), rotation_y=90, position=(-AREA_SIZE/2,0,0)))
 
-#라이트
-Light(type='pointlight', color=(1,0.4,0.4,2))
-Light(type='directional', color=(0.7, 0.7, 0.7, 3), direction=(3,3,1))
+
 
 #게임 루프
 def update():
