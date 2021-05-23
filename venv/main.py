@@ -23,8 +23,6 @@ background_music = Audio('sound/07 - Town.ogg', pitch=1, loop=True, autoplay=Tru
 power_up = Audio('sound/power_up_04.ogg', pitch=1, loop=True, autoplay=False)
 attention = Audio('sound/attention.wav', pitch=1, loop=True, autoplay=False)
 
-# 텍스쳐 모음
-
 #전체화면 지정
 window.fullscreen = True
 
@@ -89,8 +87,10 @@ class Player_kirby(Entity):
         camera.fov = 90
         mouse.locked = True
         self.mouse_sensitivity = Vec2(40, 40)
+        #라이트 설정
         DirectionalLight(parent=self, color=(1, 1, 1, 100), rotation_x=45)
-        SpotLight(parent=self, color=(1, 1, 1, 1), rotation_x=0)
+        #SpotLight(parent=self, color=(1, 1, 1, 1), rotation_x=0)
+        AmbientLight(color=(0.2,0.2,0.2,0.2))
         for key, value in kwargs.items():
             setattr(self, key, value)
 

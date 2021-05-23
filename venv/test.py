@@ -1,39 +1,36 @@
+import random
+
 from ursina import *
 import numpy as np
 
 def update():
     global e1
-    speed=.005
     for i in range(num2):
-        angle = (i+1) * 360 / num2 / 180 * np.pi
+        angle = i* 360 / num2 / 180 * np.pi
         for entity in e1[i]:
-            try:
-                radius=entity.x/np.cos(angle)
-                radius -= speed
-                entity.x=radius*np.cos(angle)
-                entity.z=radius*np.sin(angle)
-                entity.y=-3/abs(entity.x/np.cos(angle))+3
-                if radius<.3:
-                    entity.x=4*np.cos(angle)
-                    entity.z=4*np.sin(angle)
-                    entity.y=-3/abs(entity.x)/np.cos(angle)
-            except:
-                pass
+            radius=entity.x/np.cos(angle)
+            radius -= random.randint(1,5)*.005
+            entity.x=radius*np.cos(angle)
+            entity.z=radius*np.sin(angle)
+            entity.y=-3/abs(entity.x/np.cos(angle))+3
+            if radius<.3:
+                entity.x=4*np.cos(angle)
+                entity.z=4*np.sin(angle)
+                entity.y=-3000/(4*np.cos(angle))
 
 app=Ursina()
 num=40
-num2=10
+num2=50
 radius = np.linspace(4, .3, num)
-w_positions=[]
 x1=list()
 y1=list()
 z1=list()
 
 for i in range(num2):
-    angle=(i+1)*360/num2/180*np.pi
+    angle=i*360/num2/180*np.pi
     x1.append(radius*np.cos(angle))
     z1.append(radius*np.sin(angle))
-    y1.append(-3/abs(radius*np.cos(angle))+3)
+    y1.append(-3000/abs(radius*np.cos(angle))+3)
 
 e1=list()
 for i in range(num2):
