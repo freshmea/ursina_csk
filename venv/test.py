@@ -1,58 +1,51 @@
 from ursina import *
-from ursina.prefabs.first_person_controller import FirstPersonController
-from ursina.prefabs.sky import Sky
-
-
-app = Ursina()
-
-class AirpersonController(Entity):
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.speed = 5
-        self.origin_y = -.5
-        self.camera_pivot = Entity(parent=self, y=2)
-        self.cursor = Entity(parent=camera.ui, model='quad', color=color.pink, scale=.008, rotation_z=45)
-
-        camera.parent = self.camera_pivot
-        camera.position = (0, 0, 0)
-        camera.rotation = (0, 0, 0)
-        camera.fov = 90
-        mouse.locked = True
-        self.mouse_sensitivity = Vec2(40, 40)
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def update(self):
-        self.rotation_y += mouse.velocity[0] * self.mouse_sensitivity[1]
-
-        self.camera_pivot.rotation_x -= mouse.velocity[1] * self.mouse_sensitivity[0]
-        self.camera_pivot.rotation_x = clamp(self.camera_pivot.rotation_x, -90, 90)
-
-        self.direction = Vec3(self.forward * (held_keys['w'] - held_keys['s']) + self.right * (held_keys['d'] - held_keys['a'])
-                              +self.up *self.camera_pivot.rotation_x/-80* (held_keys['w'] - held_keys['s'])).normalized()
-        origin = self.world_position # + (self.up * .5)
-
-        hit_info = raycast(origin, self.direction, ignore=(self,), distance=.5, debug=False)
-        if not hit_info.hit:
-            self.position += self.direction * self.speed * time.dt
-
-
-
-
-
-
-player1 = AirpersonController()
-sky=Sky()
-r = 30
-for i in range(r):
-    grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_x=90, position=(0,i-15,0))
-    grid = Entity(model=Grid(30,30), scale=30, color=color.color(0,0,0.5), rotation_z=90, position=(0,0,i-15))
-
+import numpy as np
 
 def update():
-    pass
+    global e1
+    speed=.005
+    for i in range(num2):
+        angle = (i+1) * 360 / num2 / 180 * np.pi
+        for entity in e1[i]:
+            try:
+                radius=entity.x/np.cos(angle)
+                radius -= speed
+                entity.x=radius*np.cos(angle)
+                entity.z=radius*np.sin(angle)
+                entity.y=-3/abs(entity.x/np.cos(angle))+3
+                if radius<.3:
+                    entity.x=4*np.cos(angle)
+                    entity.z=4*np.sin(angle)
+                    entity.y=-3/abs(entity.x)/np.cos(angle)
+            except:
+                pass
+
+app=Ursina()
+num=40
+num2=10
+radius = np.linspace(4, .3, num)
+w_positions=[]
+x1=list()
+y1=list()
+z1=list()
+
+for i in range(num2):
+    angle=(i+1)*360/num2/180*np.pi
+    x1.append(radius*np.cos(angle))
+    z1.append(radius*np.sin(angle))
+    y1.append(-3/abs(radius*np.cos(angle))+3)
+
+e1=list()
+for i in range(num2):
+    e1.append([None]*num)
+
+for i in range(num2):
+    colors=random.choice([color.red, color.yellow, color.white, color.cyan, color.green])
+    for j in range(num):
+        e1[i][j]=Entity(model='sphere', color=colors, scale=.1, x=x1[i][j], y=y1[i][j], z=z1[i][j])
 
 
+
+EditorCamera()
+Text(text='Funnel Waterfall', position=(0, .4), origin=(0,0), background=True)
 app.run()
-
